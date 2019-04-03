@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Forecast </string>
+    <string name="action_graph">График погоды на месяц</string>
+    <string name="action_ShowPreferredWeather">Показать историю запросов</string>
+    <string name="action_saveLogs">Сохранить историю запросов</string>
+    <string name="action_preferredWeather">Установить любимую погоду</string>
+</resources>
