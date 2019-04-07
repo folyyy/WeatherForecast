@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorLightBlue">
+    android:background="@drawable/bg">
+
 
     <TextView
         android:id="@+id/getDate"
@@ -13,48 +14,59 @@
         android:gravity="center_horizontal"
         android:text="Date"
         android:textColor="@color/colorYellow"
-        android:textSize="25sp" />
-
-    <TextView
-        android:id="@+id/getTemp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="Temperature"
-        android:textColor="@color/colorYellow"
         android:textSize="25sp"
-        android:layout_below="@id/getDate"/>
+        android:fontFamily="sans-serif-condensed-light"
+        android:textStyle="italic"/>
+
 
     <TextView
-        android:id="@+id/getLocation"
+        android:id="@+id/getDesc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/getTemp"
         android:gravity="center_horizontal"
-        android:text="Location"
+        android:text="Description"
         android:textColor="@color/colorYellow"
-        android:textSize="25sp" />
+        android:textSize="35sp"
+        android:layout_below="@id/getDate"
+        android:fontFamily="sans-serif-condensed"
+        android:textStyle="italic"/>
 
-    <Button
-        android:id="@+id/updateButton"
-        android:layout_width="wrap_content"
+
+    <TextView
+        android:id="@+id/getCelcius"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/getLocation"
-        android:layout_centerInParent="true"
-        android:backgroundTint="@color/colorYellow"
-        android:text="Обновить погоду" />
+        android:gravity="center_horizontal"
+        android:text="Celcius"
+        android:textColor="@color/colorYellow"
+        android:textSize="50sp"
+        android:layout_below="@id/getDesc"
+        android:fontFamily="sans-serif-condensed"
+        android:textStyle="italic"/>
+
+
+    <ImageView
+        android:id="@+id/descImage"
+        android:layout_width="match_parent"
+        android:layout_height="150sp"
+        android:foregroundGravity="center_horizontal"
+        android:layout_below="@id/getCelcius"
+        android:src="@drawable/forecasticon"/>
+
 
     <ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_below="@id/updateButton">
+    android:layout_below="@id/descImage">
     <TextView
     android:id="@+id/parsedData"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="start"
     android:hint="Parsed data"
-    android:textColor="@color/colorYellow"
+    android:textColor="@color/colorWhiteCloud"
+    android:fontFamily="sans-serif-condensed"
+    android:textStyle="italic"
     android:textSize="25sp" />
     </ScrollView>
 </RelativeLayout>
