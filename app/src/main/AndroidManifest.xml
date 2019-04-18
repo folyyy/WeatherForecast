@@ -27,6 +27,12 @@
         <activity
             android:name = ".Graph"
             android:label = "Graph" />
+        <activity
+            android:name=".PreferredWeather"
+            android:label="PreferredWeather" />
+        <activity
+            android:name=".ShowHistory"
+            android:label="ShowHistory" />
     </application>
 
 

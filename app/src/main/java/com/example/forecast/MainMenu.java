@@ -15,8 +15,11 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -33,11 +36,24 @@ import org.json.JSONObject;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
+
 
 public class MainMenu extends AppCompatActivity {
     private RequestQueue queue;
+    MyDatabase db = new MyDatabase(this);
+    double[] main = new double[10];
+    String[] description = new String[10];
+    String[] dateTime = new String[10];
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    String currDate;
+    HistoryForecast historyForecast;
+    public static int minPreferredW = -100;
+    public static int maxPreferredW = -100;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +62,15 @@ public class MainMenu extends AppCompatActivity {
         getDay();
         getLocation();
         getWeather();
+        currDate = simpleDateFormat.format(new Date());
+//        getApplicationContext().deleteDatabase("HISTORY_FORECAST_DATABASE");
+        if (db.hasDay(currDate)) {
+            historyForecast = new HistoryForecast();
+            historyForecast = db.getDay(currDate);
+            minPreferredW = historyForecast.minPreferred;
+            maxPreferredW = historyForecast.maxPreferred;
+        }
+
     }
     // Getting the current day
     public void getDay() {
@@ -77,13 +102,11 @@ public class MainMenu extends AppCompatActivity {
     }
 
     // Parsing data from the API
-    double[] main = new double[10];
-    String[] description = new String[10];
-    String[] dateTime = new String[10];
     public void getWeather() {
         String appId = "0d2f372a2ebf4f1aa0d88c504e9bb551";
         String url = "https://api.weatherbit.io/v2.0/forecast/daily?lang=ru&days=10&lat=" + formatter.format(latitude) +
                 "&lon=" + formatter.format(longitude) + "&key=" + appId;
+//        String url = "https://api.weatherbit.io/v2.0/forecast/daily?lang=ru&days=10&city=Moscow&key=" + appId;
         final ImageView descImage = findViewById(R.id.descImage);
         final TextView desc = findViewById(R.id.getDesc);
         final TextView currTemp = findViewById(R.id.getCelcius);
@@ -113,6 +136,14 @@ public class MainMenu extends AppCompatActivity {
                         String location = response.getString("city_name");
                         desc.setText(description[0]);
                         currTemp.setText(location + "\n" + main[0] + " \u2103");
+                        if (!db.hasDay(dateTime[0])) {
+                            Log.d("Adding new day","Adding new day!");
+                            historyForecast = new HistoryForecast(dateTime[0], main[0], description[0],
+                                    minPreferredW, maxPreferredW);
+                            db.addDay(historyForecast);
+                        }
+
+
 
                         for (int i = 1; i < mainOb.length(); i++) {
                             JSONObject object1 = mainOb.getJSONObject(i);
@@ -122,7 +153,6 @@ public class MainMenu extends AppCompatActivity {
                             description[i] = weather1.getString("description");
                             dateTime[i] = object1.getString("datetime");
                             dailyTemp.append(dateTime[i] + " : " + main[i] + "\u2103 : " + description[i] + "\n\n");
-
                         }
 
                 } catch (JSONException e) {
@@ -137,11 +167,9 @@ public class MainMenu extends AppCompatActivity {
         }); queue.add(request);
     }
 
-    public void buildGraph() {
-        Intent i = new Intent(MainMenu.this, Graph.class);
-        i.putExtra("main", main);
-        i.putExtra("dateTime", dateTime);
-        startActivity(i);
+    public void setMinMaxPreferred(int min, int max) {
+        minPreferredW = min;
+        maxPreferredW = max;
     }
 
     // Finish the app on "back" key pressed
@@ -165,20 +193,27 @@ public class MainMenu extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.action_graph: {
-                Log.d("graphStuff", "graphStuff");
-                buildGraph();
+                Intent i = new Intent(MainMenu.this, Graph.class);
+                i.putExtra("main", main);
+                i.putExtra("dateTime", dateTime);
+                startActivity(i);
                 return true;
             }
             case R.id.action_ShowLogs: {
-                Log.d("showLogsStuff", "showLogsStuff");
+                Intent i = new Intent(MainMenu.this, ShowHistory.class);
+                startActivity(i);
                 return true;
             }
-            case R.id.action_saveLogs: {
-                Log.d("saveLogsStuff", "saveLogsStuff");
+            case R.id.action_SaveLogs: {
+                historyForecast.minPreferred = minPreferredW;
+                historyForecast.maxPreferred = maxPreferredW;
+                db.updateDay(historyForecast);
+                Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
                 return true;
             }
             case R.id.action_preferredWeather: {
-                Log.d("preferredWeatherStuff", "PreferredWeatherStuff");
+                Intent i = new Intent(MainMenu.this, PreferredWeather.class);
+                startActivity(i);
                 return true;
             }
             default:
