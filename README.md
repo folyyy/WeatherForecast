@@ -1,11 +1,13 @@
 # WeatherForecast
+
+
 Things Done: 
-1)Geolocation;
-2)Data Parsing;
-Graph Building;
-SQLite Database;
-Setting Preferred weather;
-Saving and Showing weather history.
+1) Geolocation;
+2) Data Parsing;
+3) Graph Building;
+4) SQLite Database;
+5) Setting Preferred weather;
+6) Saving and Showing weather history.
 
 
 Things left to do:
