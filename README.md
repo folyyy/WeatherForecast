@@ -9,10 +9,11 @@ Things Done:
 5) Setting Preferred weather;
 6) Saving and Showing weather history;
 7) Restoring latest data when internet is not working;
-8) Improved design, moved 9 days forecast into ListView with images.
+8) Improved design, moved 9 days forecast into ListView with images;
+9) Added notifications based on preferable weather.
 
 Things left to do:
-1) Add notifications based on preferable weather;
 
 
-We are 95% done 🤡
+
+We are 100% done 🤡
