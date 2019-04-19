@@ -29,7 +29,6 @@
         android:textStyle="italic"
         android:layout_below="@id/getPreferredWeather"/>
 
-
     <TextView
         android:id="@+id/getDesc"
         android:layout_width="match_parent"
@@ -41,7 +40,6 @@
         android:layout_below="@id/getDate"
         android:fontFamily="sans-serif-condensed"
         android:textStyle="italic" />
-
 
     <TextView
         android:id="@+id/getCelcius"
@@ -55,7 +53,6 @@
         android:fontFamily="sans-serif-condensed"
         android:textStyle="italic"/>
 
-
     <ImageView
         android:id="@+id/descImage"
         android:layout_width="match_parent"
@@ -64,20 +61,10 @@
         android:layout_below="@id/getCelcius"
         android:src="@drawable/forecasticon"/>
 
-
-    <ScrollView
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_below="@id/descImage">
-    <TextView
-    android:id="@+id/parsedData"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="start"
-    android:hint="Parsed data"
-    android:textColor="@color/colorWhiteCloud"
-    android:fontFamily="sans-serif-condensed"
-    android:textStyle="italic"
-    android:textSize="25sp" />
-    </ScrollView>
+    <ListView
+        android:id="@+id/dailyDataListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/descImage">
+    </ListView>
 </RelativeLayout>

@@ -18,8 +18,11 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -51,6 +54,8 @@ public class MainMenu extends AppCompatActivity {
     double[] main = new double[10];
     String[] description = new String[10];
     String[] dateTime = new String[10];
+    String[] imageId = new String[10];
+    ArrayList<HistoryForecast> nineDaysHistoryData;
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
     String currDate;
     HistoryForecast historyForecast;
@@ -75,7 +80,6 @@ public class MainMenu extends AppCompatActivity {
                 maxPreferredW = historyPreferredW.maxPreferred;
                 preferredWeatherText = findViewById(R.id.getPreferredWeather);
                 preferredWeatherText.setText("Радиус предпочитаемой погоды:\n (" + minPreferredW + "\u2103.." + maxPreferredW + "\u2103)");
-                ArrayList<HistoryForecast> nineDaysHistoryData;
                 nineDaysHistoryData = db.get9Days();
                 getLatestWeatherWithoutNetwork(historyForecast, nineDaysHistoryData);
                 Log.d("MIN_MAX", "MinPreferred = " + minPreferredW + ", MaxPreferred = " + maxPreferredW);
@@ -142,11 +146,9 @@ public class MainMenu extends AppCompatActivity {
         String appId = "0d2f372a2ebf4f1aa0d88c504e9bb551";
         String url = "https://api.weatherbit.io/v2.0/forecast/daily?lang=ru&days=10&lat=" + formatter.format(latitude) +
                 "&lon=" + formatter.format(longitude) + "&key=" + appId;
-//        String url = "https://api.weatherbit.io/v2.0/forecast/daily?lang=ru&days=10&city=Moscow&key=" + appId;
         final ImageView descImage = findViewById(R.id.descImage);
         final TextView desc = findViewById(R.id.getDesc);
         final TextView currTemp = findViewById(R.id.getCelcius);
-        final TextView dailyTemp = findViewById(R.id.parsedData);
 
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
             @Override
@@ -158,8 +160,8 @@ public class MainMenu extends AppCompatActivity {
                         JSONObject weather = object.getJSONObject("weather");
 
                         // Setting an icon based on weather
-                        String iconId = weather.getString("icon");
-                        String iconURL = "https://www.weatherbit.io/static/img/icons/" + iconId + ".png";
+                        imageId[0] = weather.getString("icon");
+                        String iconURL = "https://www.weatherbit.io/static/img/icons/" + imageId[0] + ".png";
                     Glide
                             .with(descImage)
                             .load(iconURL)
@@ -193,7 +195,7 @@ public class MainMenu extends AppCompatActivity {
                             main[i] = object1.getDouble("temp");
                             description[i] = weather1.getString("description");
                             dateTime[i] = object1.getString("datetime");
-                            dailyTemp.append(dateTime[i] + " : " + main[i] + "\u2103 : " + description[i] + "\n\n");
+                            imageId[i] = weather1.getString("icon");
                             // If database does not have i day, adding a new day to the database
                             if (!db.hasDay(dateTime[i])) {
                                 Log.d("Adding new day","Adding new day!");
@@ -206,7 +208,9 @@ public class MainMenu extends AppCompatActivity {
                                 db.updateDay(historyForecast);
                             }
                         }
-
+                    ListView dailyDataListView = findViewById(R.id.dailyDataListView);
+                    CustomAdapter customAdapter = new CustomAdapter();
+                    dailyDataListView.setAdapter(customAdapter);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -223,14 +227,13 @@ public class MainMenu extends AppCompatActivity {
     public void getLatestWeatherWithoutNetwork(HistoryForecast historyForecast, ArrayList<HistoryForecast> nineDaysHistoryData) {
         final TextView latestDesc = findViewById(R.id.getDesc);
         final TextView latestTemp = findViewById(R.id.getCelcius);
-        final TextView latestDailyTemp = findViewById(R.id.parsedData);
         final TextView latestDate = findViewById(R.id.getDate);
         latestDesc.setText(historyForecast.dayDescription);
         latestTemp.setText(String.valueOf(historyForecast.dayTemp  + " \u2103"));
         latestDate.setText(historyForecast.dayDate);
-        for (int i = nineDaysHistoryData.size()-1; i >= 0; i--) {
-            latestDailyTemp.append(nineDaysHistoryData.get(i).toString() + "\n\n");
-        }
+        ListView dailyDataListView = findViewById(R.id.dailyDataListView);
+        NoNetworkAdapter noNetworkAdapter = new NoNetworkAdapter();
+        dailyDataListView.setAdapter(noNetworkAdapter);
     }
 
     // Setting minPreferred and maxPreferred weather
@@ -311,6 +314,65 @@ public class MainMenu extends AppCompatActivity {
             }
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    // Adapter for ListView when there is internet connection
+    class CustomAdapter extends BaseAdapter {
+        @Override
+        public int getCount() {
+            return main.length;
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            view = getLayoutInflater().inflate(R.layout.listview_layout, null);
+            ImageView imageView = view.findViewById(R.id.imageView);
+            TextView textView_name = view.findViewById(R.id.textView_name);
+
+            String iconURL = "https://www.weatherbit.io/static/img/icons/" + imageId[i] + ".png";
+            Glide
+                    .with(imageView)
+                    .load(iconURL)
+                    .into(imageView);
+            textView_name.setText(dateTime[i] + " : " + main[i] + "\u2103 : " + description[i]);
+            return view;
+        }
+    }
+
+    // Adapter for ListView when there is no internet connection
+    class NoNetworkAdapter extends BaseAdapter {
+        @Override
+        public int getCount() {
+            return nineDaysHistoryData.size();
+        }
+
+        @Override
+        public Object getItem(int i) {
+            return null;
+        }
+
+        @Override
+        public long getItemId(int i) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            view = getLayoutInflater().inflate(R.layout.listview_layout, null);
+            TextView textView_name = view.findViewById(R.id.textView_name);
+            textView_name.setText(nineDaysHistoryData.get(i).toString());
+            return view;
         }
     }
 }

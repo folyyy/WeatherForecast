@@ -200,14 +200,14 @@ public class MyDatabase extends SQLiteOpenHelper {
         Cursor cursor = db.rawQuery(selectQuery, null);
 
         // Looping through all 9 rows and adding to list
-        if (cursor.moveToFirst()) {
+        if (cursor.moveToLast()) {
             do {
                 HistoryForecast historyForecast = new HistoryForecast();
                 historyForecast.dayDate = cursor.getString(0);
                 historyForecast.dayTemp = cursor.getDouble(1);
                 historyForecast.dayDescription = cursor.getString(2);
                 nineDayList.add(historyForecast);
-            } while (cursor.moveToNext());
+            } while (cursor.moveToPrevious());
         }
         Log.d("DB", "9 DAY HISTORY: " + nineDayList);
         return nineDayList;
@@ -251,7 +251,6 @@ public class MyDatabase extends SQLiteOpenHelper {
                 + historyForecast.dayTemp + ", dayDescription = " + historyForecast.dayDescription);
         return db.update(TABLE_NAME, values, COLUMN_DAY_DATE + " = ?", new String[]
                 {String.valueOf(historyForecast.dayDate)});
-
     }
 
     // Deleting day from database
@@ -261,6 +260,4 @@ public class MyDatabase extends SQLiteOpenHelper {
         db.delete(TABLE_NAME, COLUMN_DAY_DATE + " =?", new String[] {String.valueOf(historyForecast.dayDate)});
         db.close();
     }
-
-
 }
