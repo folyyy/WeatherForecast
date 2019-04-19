@@ -1,6 +1,9 @@
 package com.example.forecast;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,6 +14,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -211,6 +215,26 @@ public class MainMenu extends AppCompatActivity {
                     ListView dailyDataListView = findViewById(R.id.dailyDataListView);
                     CustomAdapter customAdapter = new CustomAdapter();
                     dailyDataListView.setAdapter(customAdapter);
+                    if (main[0] >= minPreferredW && main[0] <= maxPreferredW) {
+                        NotificationManager mNotificationManager =
+                                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                            NotificationChannel channel = new NotificationChannel("CHANNEL_ID",
+                                    "Предпочитаемая погода",
+                                    NotificationManager.IMPORTANCE_DEFAULT);
+                            channel.setDescription("Сегодня погода по вашему вкусу!");
+                            mNotificationManager.createNotificationChannel(channel);
+                        }
+                        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext(), "CHANNEL_ID")
+                                .setSmallIcon(R.drawable.forecasticon)
+                                .setContentTitle("Предпочитаемая погода")
+                                .setContentText("Сегодня погода по вашему вкусу!")
+                                .setAutoCancel(true); // clear notification after click
+                        Intent intent = new Intent(getApplicationContext(), MainMenu.class);
+                        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        mBuilder.setContentIntent(pi);
+                        mNotificationManager.notify(0, mBuilder.build());
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
