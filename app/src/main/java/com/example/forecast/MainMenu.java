@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -37,6 +39,7 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -51,26 +54,59 @@ public class MainMenu extends AppCompatActivity {
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
     String currDate;
     HistoryForecast historyForecast;
+    HistoryPreferredW historyPreferredW;
     public static int minPreferredW = -100;
     public static int maxPreferredW = -100;
+    TextView preferredWeatherText;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_menu);
-        queue = Volley.newRequestQueue(this);
-        getDay();
-        getLocation();
-        getWeather();
-        currDate = simpleDateFormat.format(new Date());
+        // If there is no internet connection, restore latest data from database
+        if (!isNetworkAvailable()) {
+            if (!db.isEmpty() && !db.preferredWisEmpty()) {
+                Log.d("NETWORK NOT AVAILABLE", "NETWORK NOT AVAILABLE");
+                historyForecast = new HistoryForecast();
+                historyForecast = db.getLatestDay();
+                historyPreferredW = new HistoryPreferredW();
+                historyPreferredW = db.getPreferredW();
+                minPreferredW = historyPreferredW.minPreferred;
+                maxPreferredW = historyPreferredW.maxPreferred;
+                preferredWeatherText = findViewById(R.id.getPreferredWeather);
+                preferredWeatherText.setText("Радиус предпочитаемой погоды:\n (" + minPreferredW + "\u2103.." + maxPreferredW + "\u2103)");
+                ArrayList<HistoryForecast> nineDaysHistoryData;
+                nineDaysHistoryData = db.get9Days();
+                getLatestWeatherWithoutNetwork(historyForecast, nineDaysHistoryData);
+                Log.d("MIN_MAX", "MinPreferred = " + minPreferredW + ", MaxPreferred = " + maxPreferredW);
+            }
+        } else {
+            queue = Volley.newRequestQueue(this);
+            getDay();
+            getLocation();
+            getWeather();
+            currDate = simpleDateFormat.format(new Date());
 //        getApplicationContext().deleteDatabase("HISTORY_FORECAST_DATABASE");
-        if (db.hasDay(currDate)) {
-            historyForecast = new HistoryForecast();
-            historyForecast = db.getDay(currDate);
-            minPreferredW = historyForecast.minPreferred;
-            maxPreferredW = historyForecast.maxPreferred;
-        }
 
+            // If preferred weather is in database, restore minPreferred and maxPreferred weather
+            if (!db.preferredWisEmpty()) {
+                historyPreferredW = new HistoryPreferredW();
+                historyPreferredW = db.getPreferredW();
+                minPreferredW = historyPreferredW.minPreferred;
+                maxPreferredW = historyPreferredW.maxPreferred;
+                preferredWeatherText = findViewById(R.id.getPreferredWeather);
+                preferredWeatherText.setText("Радиус предпочитаемой погоды:\n (" + minPreferredW + "\u2103.." + maxPreferredW + "\u2103)");
+            }
+            Log.d("MIN_MAX", "MinPreferred = " + minPreferredW + ", MaxPreferred = " + maxPreferredW);
+        }
+    }
+
+    // Checking if network is available
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
     // Getting the current day
     public void getDay() {
@@ -136,11 +172,16 @@ public class MainMenu extends AppCompatActivity {
                         String location = response.getString("city_name");
                         desc.setText(description[0]);
                         currTemp.setText(location + "\n" + main[0] + " \u2103");
+                        // If database does not have current day, adding a new day to the database
                         if (!db.hasDay(dateTime[0])) {
                             Log.d("Adding new day","Adding new day!");
-                            historyForecast = new HistoryForecast(dateTime[0], main[0], description[0],
-                                    minPreferredW, maxPreferredW);
+                            historyForecast = new HistoryForecast(dateTime[0], main[0], description[0]);
                             db.addDay(historyForecast);
+                            // If database has current day, updating the current day with new data
+                        } else if (db.hasDay(dateTime[0])) {
+                            Log.d("Updating curr day", "Updating current day with new data");
+                            historyForecast = new HistoryForecast(dateTime[0], main[0], description[0]);
+                            db.updateDay(historyForecast);
                         }
 
 
@@ -153,6 +194,17 @@ public class MainMenu extends AppCompatActivity {
                             description[i] = weather1.getString("description");
                             dateTime[i] = object1.getString("datetime");
                             dailyTemp.append(dateTime[i] + " : " + main[i] + "\u2103 : " + description[i] + "\n\n");
+                            // If database does not have i day, adding a new day to the database
+                            if (!db.hasDay(dateTime[i])) {
+                                Log.d("Adding new day","Adding new day!");
+                                historyForecast = new HistoryForecast(dateTime[i], main[i], description[i]);
+                                db.addDay(historyForecast);
+                                // If database has current day, updating i day with new data
+                            } else if (db.hasDay(dateTime[i])) {
+                                Log.d("Updating day with new", "Updating day with new data");
+                                historyForecast = new HistoryForecast(dateTime[i], main[i], description[i]);
+                                db.updateDay(historyForecast);
+                            }
                         }
 
                 } catch (JSONException e) {
@@ -167,6 +219,21 @@ public class MainMenu extends AppCompatActivity {
         }); queue.add(request);
     }
 
+    // If there is no internet connection, restore latest data from database
+    public void getLatestWeatherWithoutNetwork(HistoryForecast historyForecast, ArrayList<HistoryForecast> nineDaysHistoryData) {
+        final TextView latestDesc = findViewById(R.id.getDesc);
+        final TextView latestTemp = findViewById(R.id.getCelcius);
+        final TextView latestDailyTemp = findViewById(R.id.parsedData);
+        final TextView latestDate = findViewById(R.id.getDate);
+        latestDesc.setText(historyForecast.dayDescription);
+        latestTemp.setText(String.valueOf(historyForecast.dayTemp  + " \u2103"));
+        latestDate.setText(historyForecast.dayDate);
+        for (int i = nineDaysHistoryData.size()-1; i >= 0; i--) {
+            latestDailyTemp.append(nineDaysHistoryData.get(i).toString() + "\n\n");
+        }
+    }
+
+    // Setting minPreferred and maxPreferred weather
     public void setMinMaxPreferred(int min, int max) {
         minPreferredW = min;
         maxPreferredW = max;
@@ -192,25 +259,51 @@ public class MainMenu extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
+            // Graph building option
             case R.id.action_graph: {
-                Intent i = new Intent(MainMenu.this, Graph.class);
-                i.putExtra("main", main);
-                i.putExtra("dateTime", dateTime);
-                startActivity(i);
-                return true;
+                // If network is available, build a graph
+                if (isNetworkAvailable()) {
+                    Intent i = new Intent(MainMenu.this, Graph.class);
+                    i.putExtra("main", main);
+                    i.putExtra("dateTime", dateTime);
+                    startActivity(i);
+                    return true;
+                } else {
+                    Toast.makeText(getApplicationContext(), "График не работает без доступа к интернету",
+                            Toast.LENGTH_SHORT).show();
+                    return true;
+                }
             }
+            // Showing Forecast History option
             case R.id.action_ShowLogs: {
                 Intent i = new Intent(MainMenu.this, ShowHistory.class);
                 startActivity(i);
                 return true;
             }
-            case R.id.action_SaveLogs: {
-                historyForecast.minPreferred = minPreferredW;
-                historyForecast.maxPreferred = maxPreferredW;
-                db.updateDay(historyForecast);
-                Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
+            // Saving Preferred Weather option
+            case R.id.action_SavePreferredW: {
+                // If database does not have preferred weather data, add preferred weather to database
+                if (db.preferredWisEmpty()) {
+                    historyPreferredW = new HistoryPreferredW();
+                    historyPreferredW.minPreferred = minPreferredW;
+                    historyPreferredW.maxPreferred = maxPreferredW;
+                    db.addPreferredW(historyPreferredW);
+                    preferredWeatherText = findViewById(R.id.getPreferredWeather);
+                    preferredWeatherText.setText("Радиус предпочитаемой погоды:\n (" + minPreferredW + "\u2103.." + maxPreferredW + "\u2103)");
+                    Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
+                    // If database has preferred weather data, update preferred weather in database
+                } else if (!db.preferredWisEmpty()) {
+                    historyPreferredW = db.getPreferredW();
+                    historyPreferredW.minPreferred = minPreferredW;
+                    historyPreferredW.maxPreferred = maxPreferredW;
+                    preferredWeatherText = findViewById(R.id.getPreferredWeather);
+                    preferredWeatherText.setText("Радиус предпочитаемой погоды:\n (" + minPreferredW + "\u2103.." + maxPreferredW + "\u2103)");
+                    db.updatePreferredW(historyPreferredW);
+                    Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
+            // Setting preferred weather option
             case R.id.action_preferredWeather: {
                 Intent i = new Intent(MainMenu.this, PreferredWeather.class);
                 startActivity(i);

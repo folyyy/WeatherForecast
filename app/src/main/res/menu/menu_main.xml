@@ -14,9 +14,9 @@
         android:title="Показать историю погоды"
         app:showAsAction="never"/>
     <item
-        android:id="@+id/action_SaveLogs"
+        android:id="@+id/action_SavePreferredW"
         android:orderInCategory="100"
-        android:title="Сохранить историю погоды"
+        android:title="Сохранить предпочитаемую погоду"
         app:showAsAction="never"/>
     <item
         android:id="@+id/action_preferredWeather"

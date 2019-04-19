@@ -6,6 +6,16 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg">
 
+    <TextView
+        android:id="@+id/getPreferredWeather"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Предпочитаемой погоды нет"
+        android:textColor="@color/colorYellow"
+        android:textSize="25sp"
+        android:fontFamily="sans-serif-condensed-light"
+        android:textStyle="italic"/>
 
     <TextView
         android:id="@+id/getDate"
@@ -16,7 +26,8 @@
         android:textColor="@color/colorYellow"
         android:textSize="25sp"
         android:fontFamily="sans-serif-condensed-light"
-        android:textStyle="italic"/>
+        android:textStyle="italic"
+        android:layout_below="@id/getPreferredWeather"/>
 
 
     <TextView
@@ -29,7 +40,7 @@
         android:textSize="35sp"
         android:layout_below="@id/getDate"
         android:fontFamily="sans-serif-condensed"
-        android:textStyle="italic"/>
+        android:textStyle="italic" />
 
 
     <TextView

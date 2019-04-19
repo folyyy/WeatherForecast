@@ -38,7 +38,8 @@ public class PreferredWeather extends AppCompatActivity {
                 max = Integer.valueOf(maxPreferred.getText().toString());
                 MainMenu obj = new MainMenu();
                 obj.setMinMaxPreferred(min,max);
-                Toast.makeText(getApplicationContext(), "Данные успешно сохранены", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Чтобы изменения пришли в силу, сохраните предпочитаемую погоду в меню",
+                        Toast.LENGTH_SHORT).show();
                 finish();
             }
         });
