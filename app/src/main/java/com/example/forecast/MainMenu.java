@@ -7,15 +7,18 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -215,6 +218,7 @@ public class MainMenu extends AppCompatActivity {
                     ListView dailyDataListView = findViewById(R.id.dailyDataListView);
                     CustomAdapter customAdapter = new CustomAdapter();
                     dailyDataListView.setAdapter(customAdapter);
+                    // If current weather is in preferred weather radius, send a notification
                     if (main[0] >= minPreferredW && main[0] <= maxPreferredW) {
                         NotificationManager mNotificationManager =
                                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -260,12 +264,6 @@ public class MainMenu extends AppCompatActivity {
         dailyDataListView.setAdapter(noNetworkAdapter);
     }
 
-    // Setting minPreferred and maxPreferred weather
-    public void setMinMaxPreferred(int min, int max) {
-        minPreferredW = min;
-        maxPreferredW = max;
-    }
-
     // Finish the app on "back" key pressed
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -305,29 +303,6 @@ public class MainMenu extends AppCompatActivity {
             case R.id.action_ShowLogs: {
                 Intent i = new Intent(MainMenu.this, ShowHistory.class);
                 startActivity(i);
-                return true;
-            }
-            // Saving Preferred Weather option
-            case R.id.action_SavePreferredW: {
-                // If database does not have preferred weather data, add preferred weather to database
-                if (db.preferredWisEmpty()) {
-                    historyPreferredW = new HistoryPreferredW();
-                    historyPreferredW.minPreferred = minPreferredW;
-                    historyPreferredW.maxPreferred = maxPreferredW;
-                    db.addPreferredW(historyPreferredW);
-                    preferredWeatherText = findViewById(R.id.getPreferredWeather);
-                    preferredWeatherText.setText("Радиус предпочитаемой погоды:\n (" + minPreferredW + "\u2103.." + maxPreferredW + "\u2103)");
-                    Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
-                    // If database has preferred weather data, update preferred weather in database
-                } else if (!db.preferredWisEmpty()) {
-                    historyPreferredW = db.getPreferredW();
-                    historyPreferredW.minPreferred = minPreferredW;
-                    historyPreferredW.maxPreferred = maxPreferredW;
-                    preferredWeatherText = findViewById(R.id.getPreferredWeather);
-                    preferredWeatherText.setText("Радиус предпочитаемой погоды:\n (" + minPreferredW + "\u2103.." + maxPreferredW + "\u2103)");
-                    db.updatePreferredW(historyPreferredW);
-                    Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
-                }
                 return true;
             }
             // Setting preferred weather option

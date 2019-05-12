@@ -1,5 +1,6 @@
 package com.example.forecast;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -17,7 +18,8 @@ public class PreferredWeather extends AppCompatActivity {
     EditText minPreferred;
     EditText maxPreferred;
     Button submitButton;
-
+    MyDatabase db = new MyDatabase(this);
+    HistoryPreferredW historyPreferredW;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,10 +38,18 @@ public class PreferredWeather extends AppCompatActivity {
                 }
                 min = Integer.valueOf(minPreferred.getText().toString());
                 max = Integer.valueOf(maxPreferred.getText().toString());
-                MainMenu obj = new MainMenu();
-                obj.setMinMaxPreferred(min,max);
-                Toast.makeText(getApplicationContext(), "Чтобы изменения пришли в силу, сохраните предпочитаемую погоду в меню",
-                        Toast.LENGTH_SHORT).show();
+                historyPreferredW = new HistoryPreferredW();
+                historyPreferredW.minPreferred = min;
+                historyPreferredW.maxPreferred = max;
+                if (db.preferredWisEmpty()) {
+                    db.addPreferredW(historyPreferredW);
+                    Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
+                } else if (!db.preferredWisEmpty()) {
+                    db.updatePreferredW(historyPreferredW);
+                    Toast.makeText(getApplicationContext(), "Данные успешно сохранены!", Toast.LENGTH_SHORT).show();
+                }
+                Intent i = new Intent(PreferredWeather.this, MainMenu.class);
+                startActivity(i);
                 finish();
             }
         });
